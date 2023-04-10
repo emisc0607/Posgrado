@@ -1,0 +1,9 @@
+AForge/
+PropePosgrado/
+**/.vs
+**/x64
+**/Debug
+**/bin
+**/obj
+**/Properties
+

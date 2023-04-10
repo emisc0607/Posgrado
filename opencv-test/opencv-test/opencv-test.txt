@@ -1,0 +1,210 @@
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <iostream>
+#include <fstream>
+#include <queue>
+using namespace cv;
+using namespace std;
+
+void grises(Mat org, Mat sal);
+void des_grs(Mat grs, Mat img_out);
+void umbral(Mat img_gris, Mat sal, float n);
+void operaciones_img(Mat in1, Mat in2, Mat out);
+void aritmeticas(Mat in, Mat out, int s, float fact); //	1 = +, 2 = -, 3 = *, 4 = /
+void negativo(Mat in, Mat out);
+void invertir_v(Mat in, Mat out);
+void f_promedio(Mat in, Mat out);
+void conteo(Mat in);
+void dilatacion(Mat in, Mat aux, int n);
+void erosion(Mat in, Mat out, int n);
+void apertura(Mat in, Mat out, int n);
+void cierre(Mat in, Mat out, int n);
+void histograma(Mat in, Mat out);
+int video(void);
+//void imprimir_txt(Mat image);
+
+int main() {
+	//video();
+	Mat image = imread("C:/Users/emi_s/Pictures/SVC/3tornillos.jpg");
+	////Mat image1 = imread("C:/Users/emi_s/Pictures/ejemplo1b.jpg");
+	cout << "canales:" << image.channels() << " filas: " << image.rows << " columnas: " << image.cols << endl;
+	//imshow("Original", image);
+	Mat griss(image.rows, image.cols, CV_32FC1);
+	////Mat griss1(image.rows, image.cols, CV_32FC1);
+	Mat aux(image.rows, image.cols, CV_32FC1);
+	//Mat aux1(image.rows, image.cols, CV_32FC1);
+	Mat umb(image.rows, image.cols, CV_32FC1);
+	Mat img_salida(image.rows, image.cols, CV_8UC1);
+	grises(image, griss);
+	des_grs(griss, img_salida);
+	imshow("gris", img_salida);
+	//histograma(griss, aux);
+	//des_grs(aux, img_salida);
+	//imshow("Ecualizacion", img_salida);
+	//grises(image1, griss1);
+	//des_grs(griss1, img_salida);
+	umbral(griss, umb, 200.0);
+	//des_grs(umb, img_salida);
+	//imshow("Umbral", img_salida);
+	//conteo(umb);
+	//operaciones_img(griss, griss1, aux);
+	//negativo(umb, aux);
+	//dilatacion(umb, aux1);
+	//cierre(umb, aux1);
+	//aritmeticas(griss, aux, 4, 10);
+	//invertir_v(griss, aux);
+	//f_promedio(griss, aux);
+	des_grs(umb, img_salida);
+	imshow("Negativo", img_salida);
+	//imwrite("C:/Users/emi_s/Pictures/Salida1.jpg", img_salida);
+	waitKey(0);
+}
+
+void grises(Mat org, Mat sal) {
+	Mat aux(org.rows, org.cols, CV_32FC3);
+	org.convertTo(aux, CV_32FC3);
+	for (int i = 0; i < org.rows; i++)
+		for (int j = 0; j < org.cols; j++)
+		{
+			Vec3f pixel = aux.at<Vec3f>(i, j);
+			sal.at<float>(i, j) = 0.114*pixel[0] + 0.587*pixel[1] + 0.299*pixel[2];
+//			sal.at<float>(i, j) = (pixel[0] + pixel[1] + pixel[2]) / 3.0;
+		}
+}
+void umbral(Mat img_gris, Mat sal, float n) {
+	for (int i = 0; i < img_gris.rows; i++)
+		for (int j = 0; j < img_gris.cols; j++)
+		{
+			if (img_gris.at<float>(i, j) <= n)
+				sal.at<float>(i, j) = 0.0;
+			else
+				sal.at<float>(i, j) = 255.0;
+		}
+}
+void des_grs(Mat gris, Mat img_out) {
+	gris.convertTo(img_out, CV_8UC1);
+}
+void aritmeticas(Mat in, Mat out, int s, float fact) {
+	switch (s)
+	{
+	case 1:
+		for (int i = 0; i < in.rows; i++)
+			for (int j = 0; j < in.cols; j++)
+			{
+				out.at<float>(i, j) = in.at<float>(i, j) + fact;
+				if (out.at<float>(i, j) > 255.0)
+					out.at<float>(i, j) = 255.0;
+				if (out.at<float>(i, j) < 0.0)
+					out.at<float>(i, j) = 0.0;
+			}
+		break;
+	case 2:
+		for (int i = 0; i < in.rows; i++)
+			for (int j = 0; j < in.cols; j++)
+			{
+				out.at<float>(i, j) = in.at<float>(i, j) - fact;
+				if (out.at<float>(i, j) > 255.0)
+					out.at<float>(i, j) = 255.0;
+				if (out.at<float>(i, j) < 0.0)
+					out.at<float>(i, j) = 0.0;
+			}
+		break;
+	case 3:
+		for (int i = 0; i < in.rows; i++)
+			for (int j = 0; j < in.cols; j++)
+			{
+				out.at<float>(i, j) = in.at<float>(i, j) * fact;
+				if (out.at<float>(i, j) > 255.0)
+					out.at<float>(i, j) = 255.0;
+				if (out.at<float>(i, j) < 0.0)
+					out.at<float>(i, j) = 0.0;
+			}
+		break;
+	case 4:
+		for (int i = 0; i < in.rows; i++)
+			for (int j = 0; j < in.cols; j++)
+			{
+				out.at<float>(i, j) = in.at<float>(i, j) / fact;
+				if (out.at<float>(i, j) > 255.0)
+					out.at<float>(i, j) = 255.0;
+				if (out.at<float>(i, j) < 0.0)
+					out.at<float>(i, j) = 0.0;
+			}
+		break;
+	default:
+		break;
+	}
+}
+void operaciones_img(Mat in1, Mat in2, Mat out) {
+	for (int i = 0; i < in1.rows; i++)
+		for (int j = 0; j < in1.cols; j++)
+		{
+			out.at<float>(i, j) = in1.at<float>(i, j) + in2.at<float>(i, j);
+			if (out.at<float>(i, j) > 255.0)
+				out.at<float>(i, j) = 255.0;
+			if (out.at<float>(i, j) < 0.0)
+				out.at<float>(i, j) = 0.0;
+		}
+}
+void negativo(Mat in, Mat out) {
+	for (int i = 0; i < in.rows; i++)
+		for (int j = 0; j < in.cols; j++)
+		{
+			out.at<float>(i, j) = 255.0 - in.at<float>(i, j);
+		}
+}
+void invertir_v(Mat in, Mat out) {
+	for (int i = 0; i < in.rows; i++)
+		for (int j = 0; j < in.cols; j++)
+		{
+			out.at<float>(i, j) = in.at<float>((in.rows-i-1), (in.cols-j-1));
+		}
+}
+void invertir_h(Mat in, Mat out) {
+	for (int i = 0; i < in.rows; i++)
+		for (int j = 0; j < in.cols; j++)
+		{
+			out.at<float>(i, j) = in.at<float>(i, (in.cols - 1)- j);
+		}
+}
+void f_promedio(Mat in, Mat out) {
+	float acu = 0.0;
+	for (int i = 1; i < in.rows - 1; i++)
+		for (int j = 1; j < in.cols - 1; j++)
+		{
+			for (int ii = i-1; ii < i + 2; ii++)
+				for (int jj = j-1; jj < j + 2; jj++)
+				{
+					acu = in.at<float>(ii, jj) + acu;
+				}
+			out.at<float>(i, j) = acu / 9.0;
+			acu = 0.0;
+		}
+}
+void conteo(Mat in) {
+	queue<Vec2i> fifo;
+	int cont = 0;
+	for (int i = 1; i < in.rows - 1; i++) 
+		for (int j = 1; j < in.cols - 1; j++)
+		{
+			if (in.at<float>(i, j) == 255.0) {
+				fifo.push(Vec2i(i, j));
+				cont = cont + 1;
+				in.at<float>(i, j) = cont * 5.0;
+				while (!fifo.empty()) {
+					Vec2i u = fifo.front();
+					fifo.pop();
+					for (int ii = u[0] - 1; ii < u[0] + 2; ii++)
+						for (int jj = u[1] - 1; jj < u[1] + 2; jj++)
+						{
+							if (in.at<float>(ii, jj) == 255.0) {
+								fifo.push(Vec2i(ii, jj));
+								in.at<float>(ii, jj) = cont * 5.0;
+							}
+						}
+				}
+			}
+		}
+	cout << "Numero de objetos: " << cont << endl;
+}
